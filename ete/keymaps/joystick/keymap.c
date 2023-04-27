@@ -1,4 +1,4 @@
-/* Copyright 2022 YMGWORKS
+ /* Copyright 2022 YMGWORKS
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include QMK_KEYBOARD_H
+#include "analog.h"
+#include "pointing_device.h"
+
 
 // Defines names for use in layer keycodes and the keymap
 enum layer_names {
@@ -83,6 +86,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  )                                                       //|--------+---------.  ,---------+--------'
 };
 
+#define L_BASE 0
+#define L_LOWER 1
+#define L_RAISE 2
+#define L_ADJUST 3
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case QMKBEST:
@@ -105,3 +113,104 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
+
+
+//POINTING DEVICE
+
+// Set Parameters
+uint16_t minAxisValue = 190;  // Depends on each stick
+uint16_t maxAxisValue = 840;
+
+
+uint8_t maxCursorSpeed = 1.5;
+uint8_t maxScrollSpeed = 1;
+uint8_t speedRegulator = 15;  // Lower Values Create Faster Movement
+
+int8_t xPolarity = -1;
+int8_t yPolarity = -1;
+int8_t hPolarity = 1;
+int8_t vPolarity = 1;
+
+uint8_t cursorTimeout = 10;
+uint8_t scrollTimeout = 100;
+
+int16_t xOrigin, yOrigin;
+
+uint16_t lastCursor = 0;
+
+int16_t axisCoordinate(uint8_t pin, uint16_t origin) {
+   int8_t  direction;
+   int16_t distanceFromOrigin;
+   int16_t range;
+
+   int16_t position = analogReadPin(pin);
+
+   if (origin == position) {
+       return 0;
+   } else if (origin > position) {
+       distanceFromOrigin = origin - position;
+       range              = origin - minAxisValue;
+       direction          = -1;
+   } else {
+       distanceFromOrigin = position - origin;
+       range              = maxAxisValue - origin;
+       direction          = 1;
+   }
+
+   float   percent    = (float)distanceFromOrigin  / range;
+   int16_t coordinate = (int16_t)(percent * 127);
+   if (coordinate < 0) {
+       return 0;
+   } else if (coordinate > 127) {
+       return 127 * direction;
+   } else {
+       return coordinate * direction;
+   }
+}
+
+int8_t axisToMouseComponent(uint8_t pin, int16_t origin, uint8_t maxSpeed, int8_t polarity) {
+   int coordinate = axisCoordinate(pin, origin);
+   if (coordinate == 0) {
+       return 0;
+   } else {
+       float percent = (float)coordinate / 127;
+       return percent * maxSpeed * polarity * (abs(coordinate) / speedRegulator);
+   }
+}
+
+void pointing_device_task(void) {
+
+   
+   report_mouse_t report = pointing_device_get_report();
+
+   if(layer_state_is(L_RAISE)) {
+       if (timer_elapsed(lastCursor) > scrollTimeout) {
+           lastCursor = timer_read();
+           report.h   = axisToMouseComponent(B5, xOrigin, maxCursorSpeed, hPolarity);
+           report.v   = axisToMouseComponent(B4, yOrigin, maxCursorSpeed, vPolarity);
+       }
+   } else {
+       if (timer_elapsed(lastCursor) > cursorTimeout) {
+           lastCursor = timer_read();
+           report.x   = -1*axisToMouseComponent(B5, xOrigin, maxCursorSpeed, xPolarity);
+           report.y   = -1*axisToMouseComponent(B4, yOrigin, maxCursorSpeed, yPolarity);
+       }
+   }
+
+
+ if (!readPin(D4)) {
+        report.buttons |= MOUSE_BTN1;
+    } else {
+        report.buttons &= ~MOUSE_BTN1;
+    }
+
+   pointing_device_set_report(report);
+   pointing_device_send();
+
+}
+
+void matrix_init_user(void) {
+   xOrigin = analogReadPin(B5);
+   yOrigin = analogReadPin(B4);
+
+}
