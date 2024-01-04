@@ -1,0 +1,15 @@
+// Copyright 2023 YMGWorks (@YMGWorks)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#pragma once
+
+
+#define SPLIT_POINTING_ENABLE
+#define POINTING_DEVICE_COMBINED
+#define POINTING_DEVICE_ROTATION_180
+
+#define ENCODERS_PAD_A { B4 }
+#define ENCODERS_PAD_B { B5 }
+#define ENCODER_RESOLUTIONS {3}
+
+#define SPLIT_TRANSACTION_IDS_KB ETE_GET_INFO, ETE_GET_MOTION, ETE_SET_CPI
