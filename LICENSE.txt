@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2023 YMG-CODE
+Copyright (c) 2023 YMG WORKS_YMG-CODE
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
