@@ -1,0 +1,18 @@
+// Copyright 2023 YMGWorks (@YMGWorks)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#define MASTER_RIGHT
+
+#pragma once
+
+#ifdef POINTING_DEVICE_ENABLE
+  #define SPLIT_POINTING_ENABLE
+  #define POINTING_DEVICE_COMBINED
+  #define PIMORONI_TRACKBALL_SCALE 6
+  #define POINTING_DEVICE_TASK_THROTTLE_MS 1
+  #define POINTING_DEVICE_ROTATION_180_RIGHT//左手スクロール・右手カーソルの場合、RIGHTを反転
+  #define POINTING_DEVICE_AUTO_MOUSE_ENABLE
+  #define AUTO_MOUSE_DEFAULT_LAYER 3
+  #define AUTO_MOUSE_TIME 650
+
+#endif
